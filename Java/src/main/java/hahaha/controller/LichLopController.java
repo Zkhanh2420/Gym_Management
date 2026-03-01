@@ -1,0 +1,403 @@
+package hahaha.controller;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import hahaha.DTO.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import hahaha.model.*;
+import hahaha.repository.*;
+import hahaha.service.LichTapService;
+import hahaha.service.LopService;
+
+@RestController
+@RequestMapping("/api/trainer")
+public class LichLopController {
+
+    @Autowired
+    private LopService lopService;
+    @Autowired
+    private LichTapService lichTapService;
+    @Autowired
+    private AccountRepository accountRepository;
+    @Autowired
+    private CaTapRepository caTapRepository;
+    @Autowired
+    private KhuVucRepository khuVucRepository;
+    @Autowired
+    private ChiTietDangKyDichVuRepository chiTietDangKyDichVuRepository;
+
+    // --- 1. Lấy danh sách lớp của trainer ---
+    @GetMapping("/lich-lop")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> getLichLop(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            Account account = accountRepository.findAccountByUserName(username);
+            if (account == null || account.getNhanVien() == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Không tìm thấy thông tin huấn luyện viên"));
+            }
+
+            NhanVien trainer = account.getNhanVien();
+            String maNV = trainer.getMaNV();
+            List<Lop> dsLop = lopService.getLopsByTrainerMaNV(maNV);
+
+            // --- map danh sách lớp sang DTO ---
+            List<LopDTO> dsLopDto = dsLop.stream().map(l -> {
+                LopDTO dto = new LopDTO();
+                dto.setMaLop(l.getMaLop());
+                dto.setTenLop(l.getTenLop());
+                dto.setMoTa(l.getMoTa());
+                dto.setSlToiDa(l.getSlToiDa());
+                dto.setTinhTrangLop(l.getTinhTrangLop() != null ? l.getTinhTrangLop().name() : "");
+                dto.setNgayBD(l.getNgayBD().toLocalDate());
+                dto.setNgayKT(l.getNgayKT().toLocalDate());
+                dto.setGhiChu(l.getGhiChu());
+
+                // chỉ cần tên bộ môn, không trả toàn bộ danh sách dịch vụ
+                BoMonDTO boMonDTO = new BoMonDTO();
+                boMonDTO.setMaBM(l.getBoMon().getMaBM());
+                boMonDTO.setTenBM(l.getBoMon().getTenBM());
+                dto.setBoMon(boMonDTO);
+
+                return dto;
+            }).toList();
+
+            // --- THÊM: Lấy lịch tập lớp của trainer ---
+            List<LichTap> dsLichLop = lichTapService.getClassSchedulesByTrainer(maNV);
+            List<LichTapLopDTO> dsLichLopDTO = dsLichLop.stream()
+                    .map(LichTapLopDTO::new)
+                    .toList();
+
+            // --- Lấy danh sách ca tập và khu vực ---
+            List<CaTap> dsCaTap = caTapRepository.findAll();
+            List<KhuVuc> dsKhuVuc = khuVucRepository.findAll();
+
+            List<CaTapDTO> dsCaTapDTO = dsCaTap.stream()
+                    .map(CaTapDTO::new)
+                    .toList();
+
+            List<KhuVucDTO> dsKhuVucDTO = dsKhuVuc.stream()
+                    .map(KhuVucDTO::new)
+                    .toList();
+
+            // --- map trainer sang DTO ---
+            ChiTietNhanVienDTO trainerDTO = new ChiTietNhanVienDTO();
+            trainerDTO.setMaNV(trainer.getMaNV());
+            trainerDTO.setTenNV(trainer.getTenNV());
+            trainerDTO.setEmail(trainer.getEmail());
+            trainerDTO.setNgaySinh(trainer.getNgaySinh());
+            trainerDTO.setGioiTinh(trainer.getGioiTinh());
+            trainerDTO.setNgayVaoLam(trainer.getNgayVaoLam());
+            trainerDTO.setLoaiNV(trainer.getLoaiNV().toString());
+
+            return ResponseEntity.ok(Map.of(
+                    "trainer", trainerDTO,
+                    "dsLop", dsLopDto,
+                    "dsLichLop", dsLichLopDTO,
+                    "dsCaTap", dsCaTapDTO,
+                    "dsKhuVuc", dsKhuVucDTO));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- 2. Lấy lịch PT của trainer ---
+    @GetMapping("/lich-canhan")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> getLichPT(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            Account account = accountRepository.findAccountByUserName(username);
+            if (account == null || account.getNhanVien() == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Không tìm thấy thông tin huấn luyện viên"));
+            }
+
+            NhanVien trainer = account.getNhanVien();
+            String maNV = trainer.getMaNV();
+
+            List<ChiTietDangKyDichVu> dsPTCustomers = lichTapService.getPTCustomersByTrainer(maNV);
+            List<LichTap> dsPTSchedules = lichTapService.getPTScheduleByTrainer(maNV);
+            List<CaTap> dsCaTap = caTapRepository.findAll();
+            List<KhuVuc> dsKhuVuc = khuVucRepository.findAll();
+
+            List<LichTapPTDTO> dsPTSchedulesDTO = dsPTSchedules.stream()
+                    .map(LichTapPTDTO::new)
+                    .toList();
+
+            List<KhuVucDTO> dsKhuVucDTO = dsKhuVuc.stream()
+                    .map(KhuVucDTO::new)
+                    .toList();
+
+            // Convert CaTap entity to DTO to avoid serialization issues
+            List<CaTapDTO> dsCaTapDTO = dsCaTap.stream()
+                    .map(CaTapDTO::new)
+                    .toList();
+
+            List<KhachHangDTO> dsPTCustomersDTO = dsPTCustomers.stream()
+                    .map(pt -> {
+                        KhachHang kh = pt.getHoaDon().getKhachHang();
+                        return new KhachHangDTO(kh.getMaKH(), kh.getHoTen());
+                    })
+                    .toList();
+
+            // Convert NhanVien entity to DTO to avoid circular reference
+            NhanVienDTO trainerDTO = new NhanVienDTO(trainer);
+
+            return ResponseEntity.ok(Map.of(
+                    "trainer", trainerDTO,
+                    "maNV", maNV,
+                    "dsPTCustomers", dsPTCustomersDTO,
+                    "dsPTSchedules", dsPTSchedulesDTO,
+                    "dsCaTap", dsCaTapDTO,
+                    "dsKhuVuc", dsKhuVucDTO));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- 3. Tạo lịch PT ---
+    @PostMapping("/tao-lich-pt")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> taoLichPT(
+            Authentication authentication,
+            @RequestBody TaoLichPTRequest request) {
+        try {
+            String username = authentication.getName();
+            Account account = accountRepository.findAccountByUserName(username);
+            if (account == null || account.getNhanVien() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Không tìm thấy thông tin huấn luyện viên"));
+            }
+
+            String maNV = account.getNhanVien().getMaNV();
+
+            LichTap lichTap;
+            // Use new multi-day method if thuTap is provided
+            if (request.getThuTap() != null && !request.getThuTap().isEmpty()) {
+                String ngayBatDau = request.getNgayBatDau() != null ? request.getNgayBatDau() : request.getNgayTap();
+                lichTap = lichTapService.createPTScheduleMultipleDays(
+                        maNV,
+                        request.getMaKH(),
+                        ngayBatDau,
+                        request.getThuTap(),
+                        request.getCaTap(),
+                        request.getMaKV());
+            } else {
+                // Fallback to old single-day method for backward compatibility
+                lichTap = lichTapService.createPTScheduleWithDate(
+                        maNV,
+                        request.getMaKH(),
+                        request.getNgayTap(),
+                        request.getCaTap(),
+                        request.getMaKV());
+            }
+
+            if (lichTap != null) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Tạo lịch PT thành công!",
+                        "maLT", lichTap.getMaLT()));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "Không thể tạo lịch PT. Kiểm tra lại thông tin."));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // --- 4. Kiểm tra xung đột ---
+    @PostMapping("/kiem-tra-xung-dot")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> kiemTraXungDot(Authentication authentication,
+            @RequestBody KiemTraXungDotRequest request) {
+        try {
+            String username = authentication.getName();
+            Account account = accountRepository.findAccountByUserName(username);
+            if (account == null || account.getNhanVien() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Không tìm thấy thông tin huấn luyện viên"));
+            }
+
+            String maNV = account.getNhanVien().getMaNV();
+            boolean hasConflict = lichTapService.hasScheduleConflict(maNV, request.getNgay(), request.getCaTap());
+
+            return ResponseEntity.ok(Map.of("hasConflict", hasConflict));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- 5. Debug PT customers ---
+    @GetMapping("/debug/ptCustomers")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> debugPTCustomers(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            Account account = accountRepository.findAccountByUserName(username);
+            if (account == null || account.getNhanVien() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Không tìm thấy thông tin huấn luyện viên"));
+            }
+            String maNV = account.getNhanVien().getMaNV();
+            List<ChiTietDangKyDichVu> ptCustomers = chiTietDangKyDichVuRepository.findPTCustomersByTrainer(maNV);
+
+            List<Map<String, Object>> customerData = ptCustomers.stream().map(pt -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("maCTDK", pt.getMaCTDK());
+                data.put("maKH", pt.getHoaDon().getKhachHang().getMaKH());
+                data.put("tenKH", pt.getHoaDon().getKhachHang().getHoTen());
+                data.put("ngayBD", pt.getNgayBD());
+                data.put("ngayKT", pt.getNgayKT());
+                data.put("tenDV", pt.getDichVu().getTenDV());
+                data.put("trangThaiHD", pt.getHoaDon().getTrangThai());
+                return data;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(Map.of("success", true, "data", customerData));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // --- 6. Dừng lịch tập PT ---
+    @PutMapping("/dung-lich-pt/{maLT}")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> dungLichPT(@PathVariable String maLT) {
+        try {
+            // Lấy ngày hiện tại
+            String ngayDung = java.time.LocalDate.now().toString();
+
+            LichTap lichTap = lichTapService.dungLichTap(maLT, ngayDung);
+
+            if (lichTap != null) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Dừng lịch tập thành công!",
+                        "lichTap", lichTap));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "Không thể dừng lịch tập. Kiểm tra lại thông tin."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // --- 7. Hủy lịch tập PT ---
+    @PutMapping("/huy-lich-pt/{maLT}")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> huyLichPT(@PathVariable String maLT) {
+        try {
+            LichTap lichTap = lichTapService.huyLichTap(maLT);
+
+            if (lichTap != null) {
+                // Trả về thông tin cơ bản thay vì entity để tránh lỗi serialize
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Hủy lịch tập thành công!",
+                        "maLT", lichTap.getMaLT(),
+                        "trangThai", lichTap.getTrangThai() != null ? lichTap.getTrangThai() : "Huy"));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "Không thể hủy lịch tập. Kiểm tra lại thông tin."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // --- 8. Tạo lịch lớp ---
+    @PostMapping("/tao-lich-lop")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> taoLichLop(
+            Authentication authentication,
+            @RequestBody TaoLichLopRequest request) {
+        try {
+            String username = authentication.getName();
+            Account account = accountRepository.findAccountByUserName(username);
+            if (account == null || account.getNhanVien() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Không tìm thấy thông tin huấn luyện viên"));
+            }
+
+            String maNV = account.getNhanVien().getMaNV();
+
+            // Check if thuTap is provided (multiple days)
+            LichTap lichTap;
+            if (request.getThuTap() != null && !request.getThuTap().isEmpty()) {
+                // Use new multi-day method
+                lichTap = ((hahaha.service.LichTapServiceImpl) lichTapService).createClassScheduleMultipleDays(
+                        maNV,
+                        request.getMaLop(),
+                        request.getThuTap(),
+                        request.getCaTap(),
+                        request.getMaKV());
+            } else {
+                // Fallback to single-day method
+                lichTap = lichTapService.createClassSchedule(
+                        maNV,
+                        request.getMaLop(),
+                        request.getNgayTap(),
+                        request.getCaTap(),
+                        request.getMaKV());
+            }
+
+            if (lichTap != null) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Tạo lịch Lớp thành công!",
+                        "maLT", lichTap.getMaLT()));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message",
+                                "Không thể tạo lịch Lớp. Có thể do trùng lịch hoặc thông tin không hợp lệ."));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // --- 9. Hủy lịch lớp ---
+    @PutMapping("/huy-lich-lop/{maLT}")
+    @PreAuthorize("hasRole('TRAINER')")
+    public ResponseEntity<?> huyLichLop(@PathVariable String maLT) {
+        try {
+            LichTap lichTap = lichTapService.huyLichTap(maLT);
+
+            if (lichTap != null) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Hủy lịch Lớp thành công!",
+                        "maLT", lichTap.getMaLT(),
+                        "trangThai", lichTap.getTrangThai() != null ? lichTap.getTrangThai() : "Huy"));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "Không thể hủy lịch Lớp. Kiểm tra lại thông tin."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+}

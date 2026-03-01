@@ -1,0 +1,521 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #fff;
+    color: #222;
+}
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 270px;
+    background: #fafafa;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    box-shadow: 2px 0 10px #eee;
+    padding: 32px 0 32px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+}
+
+.user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #B23B41;
+    margin-left: 32px;
+    margin-bottom: 32px;
+}
+
+.user-icon {
+    font-size: 32px;
+}
+
+.user-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #B23B41;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    width: 100%;
+}
+
+.sidebar nav ul li {
+    width: 100%;
+}
+
+.sidebar nav ul li a {
+    display: block;
+    padding: 16px 32px;
+    color: #222;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: 500;
+    border-radius: 8px 0 0 8px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.sidebar nav ul li.active a,
+.sidebar nav ul li a:hover {
+    background: #ffe5e7;
+    color: #B23B41;
+}
+
+.logout-btn {
+    margin: 32px 0 0 32px;
+    padding: 12px 32px;
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #f8bcbc;
+    transition: background 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.logout-btn:hover {
+    background: #e14a4a;
+}
+
+.main-content {
+    flex: 1;
+    padding: 48px 48px 0 48px;
+}
+
+.main-content h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.search-bar {
+    width: 60%;
+    margin: 0 auto 24px auto;
+    background: #ffe5e7;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 16px;
+    position: relative;
+}
+
+.search-bar input {
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    outline: none;
+    flex: 1;
+    padding: 8px 0;
+}
+
+.search-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #B23B41;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.table-container {
+    width: 95%;
+    margin: 0 auto;
+}
+
+table {
+    width: 100%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px #eee;
+}
+
+th, td {
+    padding: 14px 18px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+}
+
+th {
+    background: #f7f7f7;
+    font-weight: 700;
+}
+
+th:first-child {
+    width: 50px;
+}
+
+th:nth-child(2) {
+    width: 100px; /* Mã lớp */
+}
+
+th:nth-child(3) {
+    width: 200px; /* Tên lớp */
+}
+
+th:nth-child(4) {
+    width: 120px; /* Ca dạy */
+}
+
+th:nth-child(5) {
+    width: 130px; /* Ngày bắt đầu */
+}
+
+th:nth-child(6) {
+    width: 130px; /* Tình trạng */
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Checkbox styles */
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #B23B41;
+    cursor: pointer;
+}
+
+/* Status styles */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    display: inline-block;
+    min-width: 100px;
+}
+
+.status.chua-day {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status.da-day {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Legacy status classes for backward compatibility */
+.status.active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status.pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status.inactive {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.action-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin: 32px 2.5% 0 0;
+}
+
+.add-btn, .delete-btn, .edit-btn {
+    padding: 12px 24px;
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #f8bcbc;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.add-btn:hover, .delete-btn:hover, .edit-btn:hover {
+    background: #e14a4a;
+}
+
+.edit-btn {
+    background: #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.edit-btn:hover {
+    background: #218838;
+}
+
+.delete-btn {
+    background: #dc3545;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
+
+/* Disabled button styles */
+.edit-btn:disabled, .delete-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+.edit-btn:disabled:hover, .delete-btn:disabled:hover {
+    background: #6c757d;
+}
+
+/* Selection info */
+.selection-info {
+    text-align: right;
+    margin: 16px 2.5% 0 0;
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.15);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px #ccc;
+    padding: 32px 32px 24px 32px;
+    min-width: 420px;
+    max-width: 500px;
+    position: relative;
+    animation: popupShow 0.2s;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+@keyframes popupShow {
+    from { transform: translateY(-40px); opacity: 0;}
+    to { transform: translateY(0); opacity: 1;}
+}
+
+.close-btn {
+    position: absolute;
+    right: 24px;
+    top: 18px;
+    font-size: 28px;
+    color: #B23B41;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.form-group {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background: #ffe5e7;
+    font-size: 16px;
+    margin-bottom: 2px;
+    font-family: 'Roboto', sans-serif;
+    resize: vertical;
+}
+
+.form-group textarea {
+    min-height: 80px;
+}
+
+.form-group input[readonly] {
+    background: #f0f0f0;
+    color: #666;
+}
+
+/* Date picker styling */
+.form-group input[type="date"] {
+    padding: 12px 14px;
+    cursor: pointer;
+    color: #333;
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+    background-color: #B23B41;
+    border-radius: 50%;
+    cursor: pointer;
+    filter: invert(1);
+}
+
+.form-group input[type="date"]::-webkit-inner-spin-button,
+.form-group input[type="date"]::-webkit-clear-button {
+    display: none;
+}
+
+.form-group input[type="date"]::-webkit-datetime-edit-text {
+    color: #333;
+    padding: 0 0.3em;
+}
+
+.form-group input[type="date"]::-webkit-datetime-edit-month-field,
+.form-group input[type="date"]::-webkit-datetime-edit-day-field,
+.form-group input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #333;
+}
+
+.add-modal-btn {
+    display: block;
+    margin: 18px auto 0 auto;
+    padding: 12px 32px;
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #f8bcbc;
+    transition: background 0.2s;
+}
+
+.add-modal-btn:hover {
+    background: #e14a4a;
+}
+
+/* Selected classes list in delete modal */
+.selected-classes {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 16px 0;
+    padding: 8px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+    .layout {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        border-radius: 0;
+        flex-direction: row;
+        align-items: center;
+        padding: 16px 0;
+    }
+    .sidebar nav ul {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+    }
+    .sidebar nav ul li a {
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    .main-content {
+        padding: 24px 16px;
+    }
+    .search-bar {
+        width: 90%;
+    }
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+    .action-btns {
+        justify-content: center;
+        margin: 32px 0 0 0;
+    }
+    .selection-info {
+        text-align: center;
+        margin: 16px 0 0 0;
+    }
+    .modal-content {
+        margin: 16px;
+        min-width: auto;
+        width: calc(100% - 32px);
+    }
+    
+    /* Mobile table adjustments */
+    th, td {
+        padding: 8px 4px;
+        font-size: 14px;
+    }
+    
+    th:nth-child(2) {
+        width: 80px; /* Mã lớp */
+    }
+    
+    th:nth-child(3) {
+        width: 150px; /* Tên lớp */
+    }
+    
+    th:nth-child(4) {
+        width: 80px; /* Ca dạy */
+    }
+    
+    th:nth-child(5) {
+        width: 100px; /* Ngày bắt đầu */
+    }
+    
+    th:nth-child(6) {
+        width: 100px; /* Tình trạng */
+    }
+}
+

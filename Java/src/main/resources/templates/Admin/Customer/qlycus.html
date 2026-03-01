@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý khách hàng</title>
+    <link rel="stylesheet" th:href="@{/css/qlycus.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="user">
+            <span class="user-icon">&#128100;</span>
+            <span class="user-title">QUẢN LÝ</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" id="adminHomeLink">Trang chủ</a></li>
+                <li class="active"><a th:href="@{/quan-ly-khach-hang/danh-sach-khach-hang}">Quản lý khách hàng</a></li>
+                <li><a th:href="@{/quan-ly-dich-vu/danh-sach-dich-vu}">Quản lý dịch vụ</a></li>
+                <li><a th:href="@{/quan-ly-bo-mon/danh-sach-bo-mon}">Quản lý bộ môn</a></li>
+                <li><a th:href="@{/thongke/doanhthu}">Thống kê</a></li>
+                <li><a href="#">Quản lý lớp</a></li>
+                <li><a href="#">Quản lý lịch tập</a></li>
+                <li><a href="#">Quản lý CTKM</a></li>
+                <li><a href="#">Quản lý voucher</a></li>
+                <li><a href="#">Quản lý thiết bị</a></li>
+                <li><a href="#">Quản lý khu vực</a></li>
+                <li><a th:href="@{/quan-ly-nhan-vien/danh-sach-nhan-vien}">Quản lý nhân viên</a></li>
+            </ul>
+        </nav>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="logout-btn">ĐĂNG XUẤT</button>
+        </form>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <h1>BẢNG DANH SÁCH KHÁCH HÀNG</h1>
+
+        <div class="search-bar">
+            <form th:action="@{/quan-ly-khach-hang/tim-kiem}" method="get">
+                <input type="text" name="keyword" placeholder="Tìm kiếm khách hàng..." required>
+                <button type="submit" class="search-btn">&#9906;</button>
+            </form>
+        </div>
+
+
+
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <!-- <th><input type="checkbox" id="selectAll"></th> -->
+                    <th>Mã khách hàng</th>
+                    <th>Họ và tên</th>
+                    <th>Ngày sinh</th>
+                    <th>Giới tính</th>
+                    <th>Email</th>
+                    <th>SDT</th>
+                    <th>Địa chỉ</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="customer : ${customers}">
+                    <!-- <td><input type="checkbox" class="row-checkbox"></td> -->
+                    <td th:text="${customer.maKH}"></td>
+                    <td th:text="${customer.hoTen}"></td>
+                    <td th:text="${customer.ngaySinh}"></td>
+                    <td th:text="${customer.gioiTinh}"></td>
+                    <td th:text="${customer.email}"></td>
+                    <td th:text="${customer.soDienThoai}"></td>
+                    <td th:text="${customer.diaChi}"></td>
+                    <td>
+                        <button class="edit-btn">SỬA</button>
+                        <form th:action="@{/quan-ly-khach-hang/xoa-khach-hang}" method="post" style="display:inline;">
+                            <input type="hidden" name="MaKH" th:value="${customer.maKH}" />
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="delete-btn" onclick="return confirm('Bạn có chắc muốn xóa khách hàng này?');">XÓA</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+<!-- Popup sửa -->
+<div class="modal" id="editCustomerModal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeEditModal">&times;</span>
+        <h2>SỬA THÔNG TIN KHÁCH HÀNG</h2>
+        <form id="editForm" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <div class="form-group"><label>Mã KH:</label><input id="editMaKH" name="maKH" readonly></div>
+            <div class="form-group"><label>Họ tên:</label><input id="editHoTen" name="hoTen" required></div>
+            <div class="form-group"><label>Ngày sinh:</label><input id="editNgaySinh" name="ngaySinh" type="date" required></div>
+            <div class="form-group"><label>Giới tính:</label>
+                <select id="editGioiTinh" name="gioiTinh" required>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Email:</label><input id="editEmail" name="email" type="email" required></div>
+            <div class="form-group"><label>SDT:</label><input id="editSDT" name="soDienThoai" required></div>
+            <div class="form-group"><label>Địa chỉ:</label><input id="editDiaChi" name="diaChi" required></div>
+            <button type="submit" class="add-modal-btn">CẬP NHẬT</button>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/js/qlycus.js}"></script>
+<script>
+// Tự động tạo link admin home
+document.addEventListener('DOMContentLoaded', function() {
+    const adminHomeLink = document.getElementById('adminHomeLink');
+    
+    // Thử lấy từ session storage hoặc tạo link mặc định
+    const savedUserId = sessionStorage.getItem('adminUserId');
+    const savedUsername = sessionStorage.getItem('adminUsername');
+    
+    if (savedUserId && savedUsername) {
+        adminHomeLink.href = `/admin/home/${savedUserId}/${savedUsername}`;
+    } else {
+        // Fallback: redirect về login để lấy lại thông tin
+        adminHomeLink.href = '/login';
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm nhân viên</title>
+    <link rel="stylesheet" th:href="@{/css/qlycus.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="user">
+            <span class="user-icon">&#128100;</span>
+            <span class="user-title">QUẢN LÝ</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" id="adminHomeLink">Trang chủ</a></li>
+                <li><a th:href="@{/quan-ly-khach-hang/danh-sach-khach-hang}">Quản lý khách hàng</a></li>
+                <li><a th:href="@{/quan-ly-dich-vu/danh-sach-dich-vu}">Quản lý dịch vụ</a></li>
+                <li><a th:href="@{/quan-ly-bo-mon/danh-sach-bo-mon}">Quản lý bộ môn</a></li>
+                <li><a href="#">Quản lý lớp</a></li>
+                <li><a href="#">Quản lý lịch tập</a></li>
+                <li><a href="#">Quản lý CTKM</a></li>
+                <li><a href="#">Quản lý voucher</a></li>
+                <li><a href="#">Quản lý thiết bị</a></li>
+                <li><a href="#">Quản lý khu vực</a></li>
+                <li class="active"><a th:href="@{/quan-ly-nhan-vien/danh-sach-nhan-vien}">Quản lý nhân viên</a></li>
+            </ul>
+        </nav>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="logout-btn">ĐĂNG XUẤT</button>
+        </form>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <h1>THÊM NHÂN VIÊN MỚI</h1>
+
+        <!-- Thông báo -->
+        <div th:if="${successMessage}" class="alert alert-success">
+            <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-error">
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Back to list button -->
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a th:href="@{/quan-ly-nhan-vien/danh-sach-nhan-vien}" class="edit-btn">← Quay lại danh sách</a>
+        </div>
+
+        <!-- Khung hiển thị ràng buộc validation -->
+        <div class="validation-rules-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 700;">
+                    📋 QUY TẮC TẠO TÀI KHOẢN NHÂN VIÊN
+                </h3>
+                <button type="button" id="toggleRules" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 12px; transition: all 0.3s ease;">
+                    🔽 Ẩn quy tắc
+                </button>
+            </div>
+            
+            <div id="rulesContent">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                    <!-- Cột trái: Thông tin cơ bản -->
+                    <div>
+                        <h4 style="margin: 0 0 15px 0; color: #ffd700; font-size: 16px; font-weight: 600;">
+                            👤 THÔNG TIN CƠ BẢN
+                        </h4>
+                        <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                            <li><strong>Tên nhân viên:</strong> 2-50 ký tự, chỉ chữ cái và khoảng trắng</li>
+                            <li><strong>Email:</strong> Phải đúng định dạng và chưa tồn tại trong hệ thống</li>
+                            <li><strong>Giới tính:</strong> Chỉ chọn Nam hoặc Nữ</li>
+                            <li><strong>Ngày sinh:</strong> Phải là ngày trong quá khứ</li>
+                            <li><strong>Ngày vào làm:</strong> Không được là ngày tương lai</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Cột phải: Tài khoản và mật khẩu -->
+                    <div>
+                        <h4 style="margin: 0 0 15px 0; color: #ffd700; font-size: 16px; font-weight: 600;">
+                            🔐 TÀI KHOẢN & MẬT KHẨU
+                        </h4>
+                        <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                            <li><strong>Username:</strong> Sử dụng email làm tài khoản đăng nhập</li>
+                            <li><strong>Mật khẩu:</strong> Tối thiểu 6 ký tự</li>
+                            <li><strong>Bắt buộc có:</strong> 1 chữ thường, 1 chữ HOA, 1 chữ số</li>
+                            <li><strong>Xác nhận:</strong> Mật khẩu và xác nhận phải khớp nhau</li>
+                            <li><strong>Quyền hạn:</strong> Tự động gán theo loại nhân viên</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Phần quyền hạn -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+                    <h4 style="margin: 0 0 15px 0; color: #ffd700; font-size: 16px; font-weight: 600; text-align: center;">
+                        🏆 PHÂN QUYỀN HỆ THỐNG
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <strong style="color: #ff6b6b;">👑 QUẢN LÝ</strong><br>
+                            <small>Toàn quyền hệ thống</small>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <strong style="color: #4ecdc4;">🏢 LỄ TÂN</strong><br>
+                            <small>Quản lý khách hàng & dịch vụ</small>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                            <strong style="color: #45b7d1;">💪 TRAINER</strong><br>
+                            <small>Huấn luyện & tư vấn</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lưu ý quan trọng -->
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; border-left: 4px solid #ffd700;">
+                    <strong style="color: #ffd700;">⚠️ LưU Ý:</strong> Email sẽ được sử dụng làm tài khoản đăng nhập và không thể thay đổi sau khi tạo. Vui lòng kiểm tra kỹ trước khi xác nhận!
+                </div>
+            </div>
+        </div>
+
+        <!-- Form thêm nhân viên -->
+        <div class="table-container">
+            <form th:action="@{/quan-ly-nhan-vien/them-nhan-vien}" method="post" th:object="${nhanVien}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                
+                <!-- Hidden inputs to store backend generated codes for JavaScript -->
+                <input type="hidden" id="nextMaNV" th:value="${nextMaNV}" />
+                <input type="hidden" id="nextMaQL" th:value="${nextMaQL}" />
+                <input type="hidden" id="nextMaPT" th:value="${nextMaPT}" />
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px #eee;">
+                    
+                    <!-- Cột trái -->
+                    <div>
+                        <div class="form-group">
+                            <label for="maNV">Mã nhân viên *</label>
+                            <input type="text" th:field="*{maNV}" id="maNV" required readonly style="background: #f8f9fa;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tenNV">Tên nhân viên *</label>
+                            <input type="text" th:field="*{tenNV}" id="tenNV" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" th:field="*{email}" id="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gioiTinh">Giới tính *</label>
+                            <select th:field="*{gioiTinh}" id="gioiTinh" required style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                <option value="">-- Chọn giới tính --</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Cột phải -->
+                    <div>
+                        <div class="form-group">
+                            <label for="ngaySinh">Ngày sinh *</label>
+                            <input type="date" th:field="*{ngaySinh}" id="ngaySinh" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ngayVaoLam">Ngày vào làm *</label>
+                            <input type="date" th:field="*{ngayVaoLam}" id="ngayVaoLam" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="loaiNV">Loại nhân viên *</label>
+                            <select th:field="*{loaiNV}" id="loaiNV" required onchange="updateEmployeeCode()" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                <option value="">-- Chọn loại nhân viên --</option>
+                                <option value="QuanLy">Quản lý</option>
+                                <option value="LeTan">Lễ tân</option>
+                                <option value="Trainer">Trainer</option>
+                            </select>
+                        </div>
+
+                        <!-- Thông tin tài khoản -->
+                        <div class="form-group">
+                            <label>Tài khoản đăng nhập</label>
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; font-size: 14px; color: #666;">
+                                <p><strong>Username:</strong> <span id="accountUsername">[Sẽ sử dụng email làm username]</span></p>
+                                <input type="password" name="rawPassword" placeholder="Nhập mật khẩu" required />
+                                <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu" required />
+                                <p><strong>Quyền hạn:</strong> <span id="roleDesc">Chọn loại nhân viên để xem quyền hạn</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="submit" class="add-modal-btn">THÊM NHÂN VIÊN</button>
+                    <button type="reset" class="delete-btn" style="margin-left: 10px;">XÓA FORM</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+// Set employee code based on type using backend generated codes
+function updateEmployeeCode() {
+    const loaiNV = document.getElementById('loaiNV').value;
+    const maNVInput = document.getElementById('maNV');
+    const roleDesc = document.getElementById('roleDesc');
+    
+    if (loaiNV) {
+        let employeeCode = '';
+        let role = '';
+        
+        // Get pre-generated codes from hidden inputs
+        const nextMaNV = document.getElementById('nextMaNV').value;
+        const nextMaQL = document.getElementById('nextMaQL').value;
+        const nextMaPT = document.getElementById('nextMaPT').value;
+        
+        switch(loaiNV) {
+            case 'QuanLy':
+                employeeCode = nextMaQL;
+                role = 'Quản lý - Toàn quyền hệ thống';
+                break;
+            case 'LeTan':
+                employeeCode = nextMaNV;
+                role = 'Nhân viên - Quản lý khách hàng và dịch vụ';
+                break;
+            case 'Trainer':
+                employeeCode = nextMaPT;
+                role = 'Trainer - Huấn luyện và tư vấn khách hàng';
+                break;
+            case 'PhongTap':
+                employeeCode = nextMaNV;
+                role = 'Nhân viên phòng tập - Hỗ trợ khách hàng';
+                break;
+        }
+        
+        maNVInput.value = employeeCode;
+        roleDesc.textContent = role;
+    } else {
+        maNVInput.value = '';
+        roleDesc.textContent = 'Chọn loại nhân viên để xem quyền hạn';
+    }
+}
+
+// Update email display dynamically
+document.getElementById('email').addEventListener('input', function() {
+    const email = this.value.trim();
+    const accountUsername = document.getElementById('accountUsername');
+    if (email) {
+        accountUsername.textContent = email;
+        accountUsername.style.color = '#28a745';
+        accountUsername.style.fontWeight = 'bold';
+    } else {
+        accountUsername.textContent = '[Sẽ sử dụng email làm username]';
+        accountUsername.style.color = '#666';
+        accountUsername.style.fontWeight = 'normal';
+    }
+});
+
+// Real-time password validation
+function setupPasswordValidation() {
+    const passwordInput = document.querySelector('input[name="rawPassword"]');
+    const confirmInput = document.querySelector('input[name="confirmPassword"]');
+    
+    if (passwordInput && confirmInput) {
+        // Tạo validation display
+        const validationDisplay = document.createElement('div');
+        validationDisplay.id = 'password-validation';
+        validationDisplay.style.cssText = `
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        `;
+        confirmInput.parentNode.appendChild(validationDisplay);
+        
+        function validatePassword() {
+            const password = passwordInput.value;
+            const confirm = confirmInput.value;
+            const display = document.getElementById('password-validation');
+            
+            const checks = [
+                { test: password.length >= 6, text: 'Tối thiểu 6 ký tự' },
+                { test: /[a-z]/.test(password), text: 'Có chữ thường' },
+                { test: /[A-Z]/.test(password), text: 'Có chữ HOA' },
+                { test: /\d/.test(password), text: 'Có chữ số' },
+                { test: password === confirm && password.length > 0, text: 'Mật khẩu khớp nhau' }
+            ];
+            
+            let html = '<strong>Kiểm tra mật khẩu:</strong><br>';
+            checks.forEach(check => {
+                const icon = check.test ? '✅' : '❌';
+                const color = check.test ? '#28a745' : '#dc3545';
+                html += `<span style="color: ${color};">${icon} ${check.text}</span><br>`;
+            });
+            
+            display.innerHTML = html;
+            
+            // Update border colors
+            const allValid = checks.every(check => check.test);
+            passwordInput.style.borderColor = password.length > 0 ? (checks.slice(0, 3).every(c => c.test) ? '#28a745' : '#dc3545') : '#ddd';
+            confirmInput.style.borderColor = confirm.length > 0 ? (checks[4].test ? '#28a745' : '#dc3545') : '#ddd';
+        }
+        
+        passwordInput.addEventListener('input', validatePassword);
+        confirmInput.addEventListener('input', validatePassword);
+    }
+}
+
+// Setup validation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setupPasswordValidation();
+    
+    // Setup toggle rules functionality
+    const toggleBtn = document.getElementById('toggleRules');
+    const rulesContent = document.getElementById('rulesContent');
+    let isVisible = true;
+    
+    toggleBtn.addEventListener('click', function() {
+        isVisible = !isVisible;
+        if (isVisible) {
+            rulesContent.style.display = 'block';
+            toggleBtn.innerHTML = '🔽 Ẩn quy tắc';
+            toggleBtn.style.background = 'rgba(255,255,255,0.2)';
+        } else {
+            rulesContent.style.display = 'none';
+            toggleBtn.innerHTML = '🔼 Hiện quy tắc';
+            toggleBtn.style.background = 'rgba(255,255,255,0.3)';
+        }
+    });
+    
+    // Admin home link setup
+    const adminHomeLink = document.getElementById('adminHomeLink');
+    const savedUserId = sessionStorage.getItem('adminUserId');
+    const savedUsername = sessionStorage.getItem('adminUsername');
+    
+    if (savedUserId && savedUsername) {
+        adminHomeLink.href = `/admin/home/${savedUserId}/${savedUsername}`;
+    } else {
+        adminHomeLink.href = '/login';
+    }
+});
+</script>
+
+</body>
+</html> 
